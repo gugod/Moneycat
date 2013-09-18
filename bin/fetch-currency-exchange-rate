@@ -1,0 +1,10 @@
+#!/usr/bin/env perl
+use v5.18;
+use YAML;
+use Moneycat;
+
+my $rate_esun = Moneycat->fetch_currency_exchange_rate_from_esunbank;
+my $rate_bot = Moneycat->fetch_currency_exchange_rate_from_bank_of_taiwan;
+
+say YAML::Dump($rate_esun);
+say YAML::Dump($rate_bot);
