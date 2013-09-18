@@ -3,7 +3,6 @@ use v5.14;
 use strict;
 use warnings;
 use utf8;
-
 use Web::Query;
 
 my %name_to_currency_code = (
@@ -55,7 +54,7 @@ sub fetch_currency_exchange_rate_from_esunbank {
     return \@out;
 }
 
-sub fetch_currency_exchange_rate_from_bank_of_taiwan {
+sub fetch_currency_exchange_rate_from_bot {
     my @table;
     wq("http://rate.bot.com.tw/Pages/Static/UIP003.zh-TW.htm")
         ->find(".entry-content table tr td.titleLeft, .entry-content table tr td.decimal")
