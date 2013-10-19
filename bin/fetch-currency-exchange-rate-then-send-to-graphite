@@ -18,7 +18,10 @@ for my $bank (@banks) {
     my $rates = Moneycat->$fetcher;
     for my $rate (@$rates) {
         for ("buy", "sell") {
-            my $metric = join(".", "money", "currency_exchange_rate", $_, $rate->{from}, $rate->{to}, $bank);
+            my $from = $rate->{from} =~ s{_CASH\z}{}r;
+            my $metric = join(".", "money", "currency_exchange_rate", $bank, $_, ($from . "_" . $rate->{to}));
+            print "$metric $rate->{$_}\n";
+            next;
             $graphite->send(
                 path => $metric,
                 value => $rate->{$_},
