@@ -20,8 +20,6 @@ for my $bank (@banks) {
         for ("buy", "sell") {
             my $from = $rate->{from} =~ s{_CASH\z}{}r;
             my $metric = join(".", "money", "currency_exchange_rate", $bank, $_, ($from . "_" . $rate->{to}));
-            print "$metric $rate->{$_}\n";
-            next;
             $graphite->send(
                 path => $metric,
                 value => $rate->{$_},
