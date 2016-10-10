@@ -30,27 +30,40 @@ my %name_to_currency_code = (
 
 sub fetch_currency_exchange_rate_from_esunbank {
     my @table;
-    wq("http://www.esunbank.com.tw/info/rate_spot_exchange.aspx")
-        ->find("table.datatable tr.tableContent-light td")
+    wq("https://www.esunbank.com.tw/bank/personal/deposit/rate/forex/foreign-exchange-rates")
+        ->find("table#inteTable1 tr")
         ->each(
             sub {
-                push @table, $_->text =~ s!\s!!gr;
+                my ($i, $elem) = @_;
+                return if $elem->has_class("titleRow");
+                my @row;
+                $elem->find("td")->each(sub { push @row, $_->text =~ s!\s!!gr });
+                push @table, \@row;
             }
         );
 
     my @out;
-    for (my $i = 0; $i < @table; $i += 3) {
-        my ($name, $buy, $sell) = @table[$i, $i+1, $i+2];
+    for (my $i = 0; $i < @table; $i += 1) {
+        my $row = $table[$i];
+        my ($name, $buy, $sell, $buy_cash, $sell_cash) = @$row;
+        my ($currency) = $name =~ s/\(([A-Z]{3})\)//;
         my $code = $name_to_currency_code{$name};
-        my $twd  = $code =~ /_CASH$/ ? "TWD_CASH" : "TWD";
         push @out, {
-            from => $code || $name,
-            to   => $twd,
+            from => $code,
+            to   => "TWD",
             buy  => $buy,
-            sell => $sell
+            sell => $sell,
         };
-    }
 
+        if ($buy_cash && $sell_cash) {
+            push @out, {
+                from => $code . "_CASH",
+                to   => "TWD_CASH",
+                buy  => $buy_cash,
+                sell => $sell_cash,
+            };            
+        }
+    }
     return \@out;
 }
 
