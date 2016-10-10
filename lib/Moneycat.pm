@@ -69,17 +69,20 @@ sub fetch_currency_exchange_rate_from_esunbank {
 
 sub fetch_currency_exchange_rate_from_bot {
     my @table;
-    wq("http://rate.bot.com.tw/Pages/Static/UIP003.zh-TW.htm")
-        ->find(".entry-content table tr td.titleLeft, .entry-content table tr td.decimal")
+    wq("http://rate.bot.com.tw/xrt?Lang=zh-TW")
+        ->find("table.table tbody tr")
         ->each(
             sub {
-                push @table, $_->text =~ s!\s!!gr;
+                my ($i, $elem) = @_;
+                my @row;
+                $elem->find("td")->each(sub { push @row, $_->text =~ s!\s!!gr });
+                push @table, \@row;
             }
         );
 
     my @out;
-    for (my $i = 0; $i < @table; $i += 5) {
-        my ($name, $buy_cash, $sell_cash, $buy, $sell) = @table[$i .. $i+5];
+    for (my $i = 0; $i < @table; $i += 1) {
+        my ($name, $buy_cash, $sell_cash, $buy, $sell) = @{$table[$i]};
         $name =~ s! \A.+\(([A-Z]+)\)\z!$1!x;
         if ($buy ne "-") {
             push @out, {
@@ -89,6 +92,7 @@ sub fetch_currency_exchange_rate_from_bot {
                 sell => $sell
             }
         }
+
         if ($buy_cash ne "-") {
             push @out, {
                 from => $name . "_CASH",
@@ -96,10 +100,10 @@ sub fetch_currency_exchange_rate_from_bot {
                 buy  => $buy_cash,
                 sell => $sell_cash
             }
-        }
+        }        
     }
 
-    return \@out
+    return \@out;
 }
 
 sub convert_currency_exchange_rate_to_hash {
