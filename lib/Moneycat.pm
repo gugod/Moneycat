@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use utf8;
 use Web::Query;
+use LWP::UserAgent;
+
+$Web::Query::UserAgent = LWP::UserAgent->new( agent => "Mozilla/5.0" );
 
 my %name_to_currency_code = (
     "美元現金"   => "USD_CASH",
@@ -30,6 +33,7 @@ my %name_to_currency_code = (
 
 sub fetch_currency_exchange_rate_from_esunbank {
     my @table;
+
     wq("https://www.esunbank.com.tw/bank/personal/deposit/rate/forex/foreign-exchange-rates")
         ->find("table#inteTable1 tr")
         ->each(
@@ -48,6 +52,12 @@ sub fetch_currency_exchange_rate_from_esunbank {
         my ($name, $buy, $sell, $buy_cash, $sell_cash) = @$row;
         my ($currency) = $name =~ s/\(([A-Z]{3})\)//;
         my $code = $name_to_currency_code{$name};
+
+        if (!defined($code)) {
+            warn "Unrecognized currency name: $name";
+            next;
+        }
+
         push @out, {
             from => $code,
             to   => "TWD",
@@ -61,7 +71,7 @@ sub fetch_currency_exchange_rate_from_esunbank {
                 to   => "TWD_CASH",
                 buy  => $buy_cash,
                 sell => $sell_cash,
-            };            
+            };
         }
     }
     return \@out;
@@ -100,7 +110,7 @@ sub fetch_currency_exchange_rate_from_bot {
                 buy  => $buy_cash,
                 sell => $sell_cash
             }
-        }        
+        }
     }
 
     return \@out;
